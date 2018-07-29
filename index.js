@@ -14,7 +14,7 @@ import {sprintf} from 'sprintf-js';
 const DEFAULT_BG_COLOR = '#FAB913';
 const DEFAULT_TIME_TXT_COLOR = '#000';
 const DEFAULT_DIGIT_TXT_COLOR = '#000';
-const DEFAULT_TIME_TO_SHOW = ['D', 'H', 'M', 'S'];
+const DEFAULT_TIME_TO_SHOW = [ 'M', 'S'];
 
 class CountDown extends React.Component {
   static propTypes = {
@@ -24,13 +24,18 @@ class CountDown extends React.Component {
     timeToShow: PropTypes.array,
     size: PropTypes.number,
     until: PropTypes.number,
+    until2: PropTypes.number,
     onFinish: PropTypes.func,
     onPress: PropTypes.func,
+    clear: PropTypes.bool,
+
   };
 
   state = {
     until: this.props.until,
+    flipInterval: true,
     wentBackgroundAt: null,
+  
   };
 
   componentDidMount() {
@@ -76,16 +81,40 @@ class CountDown extends React.Component {
   updateTimer = () => {
     const {until} = this.state;
 
-    if (until <= 1) {
-      clearInterval(this.timer);
-      if (this.onFinish) {
-        this.onFinish();
-        this.setState({until: 0});
+    if(!this.props.clear){
+      if (until <= 1) {
+        
+        if (this.state.flipInterval) {
+          this.setState({until: this.props.until2})
+          
+        }
+        else{
+          this.setState({until: this.props.until})
+
+        }
+        
+        this.setState({flipInterval: !this.state.flipInterval})
+      } 
+      else {
+        this.setState({until: until - 1});
       }
-    } else {
-      this.setState({until: until - 1});
     }
-  };
+    else{ 
+      if (until <= 1) {
+        clearInterval(this.timer);
+        if (this.onFinish) {
+          this.onFinish();
+          this.setState({until: 0});
+          
+        }
+        console.log('sadassdas')
+      }
+      else {
+        this.setState({until: until - 1});
+      }
+  }
+  
+}
 
   renderDigit = (d) => {
     const {digitBgColor, digitTxtColor, size} = this.props;
@@ -110,7 +139,7 @@ class CountDown extends React.Component {
     const {timeTxtColor, size} = this.props;
 
     return (
-      <View style={styles.doubleDigitCont}>
+      <View key={label} style={styles.doubleDigitCont}>
         <View style={styles.timeInnerCont}>
           {this.renderDigit(digits)}
         </View>
@@ -129,7 +158,7 @@ class CountDown extends React.Component {
     const {timeToShow} = this.props;
     const {until} = this.state;
     const {days, hours, minutes, seconds} = this.getTimeLeft();
-    const newTime = sprintf('%02d:%02d:%02d:%02d', days, hours, minutes, seconds).split(':');
+    const newTime = sprintf('%02d:%02d',  minutes, seconds).split(':');
     const Component = this.props.onPress ? TouchableOpacity : View;
 
     return (
@@ -137,10 +166,9 @@ class CountDown extends React.Component {
         style={styles.timeCont}
         onPress={this.props.onPress}
       >
-        {_.includes(timeToShow, 'D') ? this.renderDoubleDigits(this.props['labelD'], newTime[0]) : null}
-        {_.includes(timeToShow, 'H') ? this.renderDoubleDigits(this.props['labelH'], newTime[1]) : null}
-        {_.includes(timeToShow, 'M') ? this.renderDoubleDigits(this.props['labelM'], newTime[2]) : null}
-        {_.includes(timeToShow, 'S') ? this.renderDoubleDigits(this.props['labelS'], newTime[3]) : null}
+       
+        {_.includes(timeToShow, 'M') ? this.renderDoubleDigits(this.props['labelM'], newTime[0]) : null}
+        {_.includes(timeToShow, 'S') ? this.renderDoubleDigits(this.props['labelS'], newTime[1]) : null}
       </Component>
     );
   };
@@ -165,6 +193,7 @@ CountDown.defaultProps = {
   labelS: "Seconds",
   until: 0,
   size: 15,
+  clear: false
 };
 
 const styles = StyleSheet.create({
